@@ -1,0 +1,32 @@
+export const projects = [
+  {
+    id: 1,
+    title: 'E-commerce Platform',
+    description: 'Plataforma completa de e-commerce com carrinho, pagamentos e painel administrativo.',
+    tags: ['React', 'Node.js', 'PostgreSQL', 'Stripe'],
+    github: 'https://github.com/davimaximo',
+    live: null,
+    image: null,
+    featured: true,
+  },
+  {
+    id: 2,
+    title: 'Task Management App',
+    description: 'Aplicativo de gerenciamento de tarefas com drag & drop, filtros e colaboração em tempo real.',
+    tags: ['React', 'Firebase', 'TailwindCSS'],
+    github: 'https://github.com/davimaximo',
+    live: null,
+    image: null,
+    featured: true,
+  },
+  {
+    id: 3,
+    title: 'REST API Services',
+    description: 'API RESTful escalável com autenticação JWT, rate limiting e documentação automática.',
+    tags: ['Node.js', 'Express', 'MongoDB', 'JWT'],
+    github: 'https://github.com/davimaximo',
+    live: null,
+    image: null,
+    featured: true,
+  },
+]
