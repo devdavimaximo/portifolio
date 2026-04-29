@@ -1,6 +1,6 @@
 import { useRef } from 'react'
 import HeroText from './HeroText'
-import HeroCanvas from './HeroCanvas'
+import HeroVideo from './HeroVideo'
 
 export default function Hero() {
   const sectionRef = useRef(null)
@@ -14,7 +14,7 @@ export default function Hero() {
     >
       <div className="sticky top-0 h-screen overflow-hidden">
 
-        <HeroCanvas sectionRef={sectionRef} />
+        <HeroVideo sectionRef={sectionRef} />
 
         {/* Mobile: gradiente lateral — escuro à esquerda (texto), abre à direita (animação) */}
         <div

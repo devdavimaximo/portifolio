@@ -1,5 +1,12 @@
 import { useEffect, useRef } from 'react'
 
+/*
+ * Scroll → currentTime direto, sem lerp, sem loop contínuo.
+ * Um único RAF por evento de scroll — para imediatamente após aplicar.
+ *
+ * Para seeking suave este vídeo deve ser codificado com todos
+ * os frames como keyframes: ffmpeg -g 1 -keyint_min 1 -sc_threshold 0
+ */
 export default function HeroVideo({ sectionRef }) {
   const videoRef = useRef(null)
 
@@ -7,10 +14,15 @@ export default function HeroVideo({ sectionRef }) {
     const video = videoRef.current
     if (!video) return
 
-    const state = {
-      target: 0,
-      current: 0,
-      raf: null,
+    let pending = null
+    let raf = null
+
+    const applyTime = () => {
+      raf = null
+      if (pending !== null && video.duration) {
+        video.currentTime = pending
+        pending = null
+      }
     }
 
     const handleScroll = () => {
@@ -18,28 +30,12 @@ export default function HeroVideo({ sectionRef }) {
       if (!section || !video.duration) return
       const scrollable = section.offsetHeight - window.innerHeight
       const scrolled = Math.max(0, window.scrollY - section.offsetTop)
-      const progress = Math.min(1, scrolled / scrollable)
-      state.target = progress * video.duration
-    }
-
-    /*
-     * Lerp suaviza a atualização do currentTime entre frames,
-     * evitando saltos bruscos ao rolar rápido.
-     */
-    const lerp = (a, b, t) => a + (b - a) * t
-
-    const tick = () => {
-      const diff = Math.abs(state.target - state.current)
-      if (diff > 0.005) {
-        state.current = lerp(state.current, state.target, 0.12)
-        video.currentTime = state.current
-      }
-      state.raf = requestAnimationFrame(tick)
+      pending = Math.min(1, scrolled / scrollable) * video.duration
+      if (!raf) raf = requestAnimationFrame(applyTime)
     }
 
     const onReady = () => {
-      state.raf = requestAnimationFrame(tick)
-      window.addEventListener('scroll', handleScroll, { passive: true })
+      video.pause()
       handleScroll()
     }
 
@@ -49,9 +45,11 @@ export default function HeroVideo({ sectionRef }) {
       video.addEventListener('loadedmetadata', onReady, { once: true })
     }
 
+    window.addEventListener('scroll', handleScroll, { passive: true })
+
     return () => {
       window.removeEventListener('scroll', handleScroll)
-      if (state.raf) cancelAnimationFrame(state.raf)
+      if (raf) cancelAnimationFrame(raf)
     }
   }, [sectionRef])
 
@@ -62,6 +60,7 @@ export default function HeroVideo({ sectionRef }) {
       muted
       playsInline
       preload="auto"
+      disablePictureInPicture
       className="absolute inset-0 w-full h-full object-cover object-[80%_50%] md:object-center"
     />
   )
