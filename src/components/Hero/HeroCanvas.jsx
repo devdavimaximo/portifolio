@@ -7,6 +7,9 @@ export default function HeroCanvas({ sectionRef }) {
   const canvasRef = useRef(null)
 
   useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+
     const state = {
       images: new Array(FRAME_COUNT).fill(null),
       current: -1,
@@ -15,8 +18,6 @@ export default function HeroCanvas({ sectionRef }) {
     }
 
     const drawFrame = (index) => {
-      const canvas = canvasRef.current
-      if (!canvas) return
       const img = state.images[index]
       if (!img?.complete || !img.naturalWidth) return
 
@@ -29,60 +30,66 @@ export default function HeroCanvas({ sectionRef }) {
       if (imgAR > canvasAR) {
         dh = height
         dw = dh * imgAR
-        dx = (width - dw) / 2
+        // mobile: shift right (equivalent to object-[80%_50%]), desktop: center
+        const xPos = width < 768 ? 0.8 : 0.5
+        dx = -(dw - width) * xPos
         dy = 0
       } else {
         dw = width
         dh = dw / imgAR
         dx = 0
-        dy = (height - dh) / 2
+        dy = -(dh - height) * 0.5
       }
 
       ctx.clearRect(0, 0, width, height)
       ctx.drawImage(img, dx, dy, dw, dh)
     }
 
-    // Load all frames — src set after onload to avoid race
+    /*
+     * RAF só dispara quando há um frame novo para desenhar.
+     * Ao contrário do loop contínuo anterior, para imediatamente
+     * após o render — zero CPU em idle.
+     */
+    const scheduleRender = () => {
+      if (state.raf) return
+      state.raf = requestAnimationFrame(() => {
+        state.raf = null
+        if (state.pending !== state.current) {
+          state.current = state.pending
+          drawFrame(state.current)
+        }
+      })
+    }
+
     for (let i = 0; i < FRAME_COUNT; i++) {
       const img = new Image()
       state.images[i] = img
       img.onload = () => {
-        // Draw first frame as soon as it's ready
         if (i === 0 && state.current === -1) {
           state.current = 0
           drawFrame(0)
         }
-        if (i === state.current) drawFrame(i)
       }
       img.src = getFrameUrl(i + 1)
     }
 
-    // RAF loop — only redraws when frame changes
-    const tick = () => {
-      if (state.pending !== state.current) {
-        state.current = state.pending
-        drawFrame(state.current)
-      }
-      state.raf = requestAnimationFrame(tick)
-    }
-    state.raf = requestAnimationFrame(tick)
-
     const handleScroll = () => {
       const section = sectionRef.current
       if (!section) return
-      const sectionTop = section.offsetTop
       const scrollable = section.offsetHeight - window.innerHeight
-      const scrolled = Math.max(0, window.scrollY - sectionTop)
+      const scrolled = Math.max(0, window.scrollY - section.offsetTop)
       const progress = Math.min(1, scrolled / scrollable)
-      state.pending = Math.round(progress * (FRAME_COUNT - 1))
+      const frame = Math.round(progress * (FRAME_COUNT - 1))
+      if (frame !== state.pending) {
+        state.pending = frame
+        scheduleRender()
+      }
     }
 
     const resize = () => {
-      const canvas = canvasRef.current
-      if (!canvas) return
       canvas.width = window.innerWidth
       canvas.height = window.innerHeight
-      drawFrame(state.current >= 0 ? state.current : 0)
+      if (state.current >= 0) drawFrame(state.current)
     }
 
     window.addEventListener('scroll', handleScroll, { passive: true })
@@ -97,10 +104,5 @@ export default function HeroCanvas({ sectionRef }) {
     }
   }, [sectionRef])
 
-  return (
-    <canvas
-      ref={canvasRef}
-      className="absolute inset-0 w-full h-full"
-    />
-  )
+  return <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" />
 }
