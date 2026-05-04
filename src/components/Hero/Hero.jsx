@@ -9,7 +9,7 @@ export default function Hero() {
     <section
       id="hero"
       ref={sectionRef}
-      style={{ height: '230vh' }}
+      className="relative md:h-[230vh] h-screen"
       className="relative"
     >
       <div className="sticky top-0 h-screen overflow-hidden">

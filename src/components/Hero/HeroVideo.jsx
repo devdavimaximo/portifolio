@@ -16,11 +16,6 @@ import { useEffect, useRef } from 'react'
 const LERP = 0.2
 const THRESHOLD = 0.015
 
-// Touch/coarse-pointer = mobile: scroll inertia torna o lerp contraproducente.
-// Nesses dispositivos usamos autoplay em loop — sem RAF, sem seeking.
-const isMobileDevice = () =>
-  window.matchMedia('(hover: none) and (pointer: coarse)').matches
-
 export default function HeroVideo({ sectionRef }) {
   const videoRef = useRef(null)
 
@@ -28,13 +23,6 @@ export default function HeroVideo({ sectionRef }) {
     const video = videoRef.current
     if (!video) return
 
-    if (isMobileDevice()) {
-      // Mobile: autoplay em loop, sem nenhuma manipulação de currentTime
-      video.play().catch(() => {})
-      return
-    }
-
-    // Desktop: scroll-sync com lerp e loop de RAF auto-gerenciado
     let target = 0
     let current = 0
     let rafId = null
@@ -86,8 +74,6 @@ export default function HeroVideo({ sectionRef }) {
     }
   }, [sectionRef])
 
-  const mobile = isMobileDevice()
-
   return (
     <video
       ref={videoRef}
@@ -96,10 +82,7 @@ export default function HeroVideo({ sectionRef }) {
       playsInline
       preload="metadata"
       disablePictureInPicture
-      // autoPlay + loop apenas no mobile — desktop controla via currentTime
-      autoPlay={mobile}
-      loop={mobile}
-      className="absolute inset-0 w-full h-full object-cover object-[80%_50%] md:object-center"
+      className="absolute inset-0 w-full h-full object-cover md:object-center hidden md:block"
       style={{ willChange: 'transform' }}
     />
   )
