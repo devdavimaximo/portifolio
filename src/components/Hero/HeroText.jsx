@@ -55,7 +55,7 @@ export default function HeroText() {
       "
     >
       {/* AMBIENT */}
-      <div className="absolute -left-24 top-12 w-56 h-56 bg-violet-500/[0.04] blur-[100px] pointer-events-none" />
+      <div className="absolute -left-24 top-12 w-56 h-56 bg-violet-500/[0.04] hidden md:block blur-[100px] pointer-events-none" />
 
       {/* HEADER INFO */}
       <div className="flex flex-col gap-4">
